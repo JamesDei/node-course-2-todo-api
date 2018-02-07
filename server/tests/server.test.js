@@ -261,4 +261,4 @@ describe('POST /users', () => {
             .expect(400)
             .end(done);
     });
-})
+});
