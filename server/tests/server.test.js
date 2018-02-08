@@ -1,9 +1,6 @@
 const expect = require('expect');
-const {toBeType} = require('jest-tobetype');
 const request = require('supertest');
 const {ObjectID} = require('mongodb');
-
-expect.extend(toBeType);
 
 
 const {app} = require('./../server');
@@ -13,6 +10,8 @@ const {todos, populateTodos, users, populateUsers} = require('./seed/seed');
 
 beforeEach(populateUsers);
 beforeEach(populateTodos);
+
+//TODOS
 
 describe('POST/todos', () => {
     it('should create a new todo', (done) => {
@@ -144,8 +143,6 @@ describe('DELETE /todos/:id', () => {
 
 });
 
-
-
 describe('PATCH /todos/:id', () => {
     it('should update the todo', (done) => {
 
@@ -188,6 +185,8 @@ describe('PATCH /todos/:id', () => {
     });
 });
 
+
+//USERS
 
 describe('GET /users/me', () => {
     it('should return user if authenticated', (done) => {
@@ -292,27 +291,44 @@ describe('POST /users/login', () => {
 
     it('should reject invalid login', (done) => {
         request(app)
-        .post('/users/login')
-        .send({
-            email: users[1].email,
-            password: users[1].password + 1,
-        })
-        .expect(400)
-        .expect((res) => {
-            expect(res.headers['x-auth']).toBeFalsy();
-        })
-        .end((err, res) => {
-            if (err) {
-                return done(err);
-            }
+            .post('/users/login')
+            .send({
+                email: users[1].email,
+                password: users[1].password + 1,
+            })
+            .expect(400)
+            .expect((res) => {
+                expect(res.headers['x-auth']).toBeFalsy();
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
 
-            User.findById(users[1]._id).then((user) => {
-                expect(user.tokens.length).toBe(0);
-                done();
-            }).catch((e) => done(e));
+                User.findById(users[1]._id).then((user) => {
+                    expect(user.tokens.length).toBe(0);
+                    done();
+                }).catch((e) => done(e));
         });
     });
 });
 
-// email: 'jen@example.com',
-// password: 'userTwoPass'
+describe('DELETE /users/me/token', () => {
+    it('should remove auth token on logout', (done) => {
+        request(app)
+            .delete('/users/me/token')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findById(users[0]._id).then((user) => {
+                    expect(user.tokens.length).toBe(0);
+                    done();
+                }).catch((e) => done(e));
+            })
+        
+    });
+});
